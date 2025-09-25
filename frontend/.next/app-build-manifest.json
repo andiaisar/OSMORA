@@ -16,10 +16,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/detail/page.js"
     ],
-    "/payment/page": [
+    "/api/tokenizer/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/payment/page.js"
+      "static/chunks/app/api/tokenizer/route.js"
     ]
   }
 }

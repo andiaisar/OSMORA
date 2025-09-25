@@ -32,18 +32,24 @@ export default function Page() {
     const totalPrice = frame.price * printQuantity;
     // const booth = JSON.parse(localStorage.getItem("booth"));
     const data = {
-      order_id: frame.id,
-      price: totalPrice,
-      username: "testuser", // Replace with actual username logic
+      id: frame.id,
+      productName: frame.name,
+      amount: printQuantity, // Mengirim jumlah cetak
+      price: frame.price,    // Mengirim harga per item
     }
 
-    const response = await fetch("/payment", {
-      method: "POST",
-      headers: {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API;
+  const response = await fetch("/api/tokenizer",  {
+    method: "POST",
+    headers: {
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+          },
+          body: JSON.stringify({
+              order_id: data.id,
+              totalAmount: data.price,
+              username: data.username
+          }),
+      });
 
     const result = await response.json();
     window.snap.pay(result.token, {
