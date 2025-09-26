@@ -16,10 +16,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/detail/page.js"
     ],
-    "/api/tokenizer/route": [
+    "/camera/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/tokenizer/route.js"
+      "static/chunks/app/camera/page.js"
+    ],
+    "/thanks/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/thanks/page.js"
     ]
   }
 }

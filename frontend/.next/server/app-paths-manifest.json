@@ -1,5 +1,5 @@
 {
-  "/api/tokenizer/route": "app/api/tokenizer/route.js",
-  "/page": "app/page.js",
-  "/detail/page": "app/detail/page.js"
+  "/detail/page": "app/detail/page.js",
+  "/thanks/page": "app/thanks/page.js",
+  "/camera/page": "app/camera/page.js"
 }
