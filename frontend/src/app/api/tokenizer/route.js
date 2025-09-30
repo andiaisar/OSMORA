@@ -160,30 +160,49 @@
 
 import Midtrans from "midtrans-client";
 import { NextResponse } from "next/server";
-// import { frame } from "@/app/libs/produk"; // ✅ Perbaikan ada di sini
-
-let snap = new Midtrans.Snap({
-    isProduction: false,
-    serverKey: process.env.MIDTRANS_SECRET,
-    clientKey: process.env.MIDTRANS_CLIENT,
-});
 
 export async function POST(request) {
-    const { id, productName, amount, price } = await request.json(); 
-    let parameter = {
-        item_details: 
-            {
+    try {
+        const { id, productName, amount, price } = await request.json(); 
+        
+        // Konfigurasi Midtrans dengan credentials sandbox
+        let snap = new Midtrans.Snap({
+            isProduction: false, // Set ke true untuk production
+            serverKey: 'Mid-server-7lOiISllLV5QtFcRhBY_DVkg', // Sandbox server key
+            clientKey: 'Mid-client-E-Q5p49F6YexvEAj', // Sandbox client key
+        });
+        
+        let parameter = {
+            item_details: {
                 name: productName,
                 price: price,
                 quantity: amount,
             },
-        transaction_details: {
-            order_id: id,
-            gross_amount: price * amount,
-        }, 
+            transaction_details: {
+                order_id: id,
+                gross_amount: price * amount,
+            },
+            customer_details: {
+                first_name: "Photo Booth",
+                last_name: "User",
+                email: "user@photoboothosmora.com"
+            },
+            // Tambahkan callbacks untuk redirect setelah payment
+            callbacks: {
+                finish: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment`
+            }
+        }
+
+        console.log('Creating Midtrans transaction with parameter:', parameter);
+        const token = await snap.createTransactionToken(parameter);
+        console.log('Midtrans token created successfully:', token);
+
+        return NextResponse.json({ token });
+    } catch (error) {
+        console.error("Midtrans tokenizer error:", error);
+        return NextResponse.json(
+            { error: "Failed to create payment token", details: error.message }, 
+            { status: 500 }
+        );
     }
-
-    const token = await snap.createTransactionToken(parameter);
-
-    return NextResponse.json({token})
 }

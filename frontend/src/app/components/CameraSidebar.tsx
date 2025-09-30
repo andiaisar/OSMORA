@@ -18,9 +18,11 @@ interface CameraSidebarProps {
   photos: string[]
   selectedIndex: number | null
   retakingIndex: number | null
+  readyToRetake: boolean
   onFrameSelect: (index: number) => void
   onCapture: () => void
   onStartRetake: () => void
+  onConfirmRetake: () => void
   onCancelRetake: () => void
   onFinish: () => void
   onTimeFinish: () => void
@@ -35,9 +37,11 @@ export default function CameraSidebar({
   photos,
   selectedIndex,
   retakingIndex,
+  readyToRetake,
   onFrameSelect,
   onCapture,
   onStartRetake,
+  onConfirmRetake,
   onCancelRetake,
   onFinish,
   onTimeFinish,
@@ -77,11 +81,13 @@ export default function CameraSidebar({
       <CameraActionButtons
         onCapture={onCapture}
         onStartRetake={onStartRetake}
+        onConfirmRetake={onConfirmRetake}
         onCancelRetake={onCancelRetake}
         onFinish={onFinish}
         captureDisabled={photos.length >= frameData.totalFrames && retakingIndex === null}
         selectedIndex={selectedIndex}
         retakingIndex={retakingIndex}
+        readyToRetake={readyToRetake}
         photos={photos}
         totalFrames={frameData.totalFrames}
         isCapturing={isCapturing}

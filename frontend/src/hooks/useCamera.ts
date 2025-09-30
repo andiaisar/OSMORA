@@ -16,6 +16,7 @@ export function useCamera() {
   const [countdown, setCountdown] = useState(0)
   const [isCapturing, setIsCapturing] = useState(false) // Add this to prevent double capture
   const [previewMode, setPreviewMode] = useState(false) // New state for preview mode
+  const [readyToRetake, setReadyToRetake] = useState(false) // New state for retake ready mode
   const router = useRouter()
 
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -85,12 +86,84 @@ export function useCamera() {
     }
   }, [])
 
+  // Effect to ensure video stays connected to stream when not in preview mode
+  useEffect(() => {
+    if (!previewMode && videoRef.current && streamRef.current) {
+      const video = videoRef.current
+      
+      // Only reconnect if video is not already connected to the current stream
+      if (video.srcObject !== streamRef.current) {
+        console.log('🔄 Reconnecting video to stream (not in preview mode)')
+        video.srcObject = streamRef.current
+        video.playsInline = true
+        video.play().catch(() => {
+          console.warn('Failed to play video after reconnection')
+        })
+      }
+      
+      // Clear any previous errors when returning to camera mode
+      setError(null)
+    }
+  }, [previewMode]) // Re-run when previewMode changes
+
+  // Function to ensure video is connected to stream and ready
+  const ensureVideoReady = useCallback(async () => {
+    const video = videoRef.current
+    if (!video || !streamRef.current) {
+      console.error('❌ No video element or stream available')
+      return false
+    }
+
+    // Check if video is already connected to stream
+    if (video.srcObject !== streamRef.current) {
+      console.log('🔧 Reconnecting video to stream...')
+      video.srcObject = streamRef.current
+      video.playsInline = true
+    }
+
+    // Ensure video is playing
+    try {
+      if (video.paused) {
+        await video.play()
+      }
+    } catch (err) {
+      console.warn('⚠️ Failed to play video:', err)
+    }
+
+    // Wait for video to be ready
+    return new Promise<boolean>((resolve) => {
+      const checkReady = () => {
+        if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+          console.log('✅ Video is ready')
+          resolve(true)
+        } else {
+          console.log('⏳ Video not ready yet, retrying...', {
+            readyState: video.readyState,
+            videoWidth: video.videoWidth,
+            videoHeight: video.videoHeight
+          })
+          setTimeout(checkReady, 100)
+        }
+      }
+      
+      // Start checking immediately, but timeout after 5 seconds
+      checkReady()
+      setTimeout(() => resolve(false), 5000)
+    })
+  }, [])
+
   // Define actualCapturePhoto first
   const actualCapturePhoto = useCallback(async () => {
+    console.log('📸 actualCapturePhoto called', {
+      isCapturing,
+      captureInProgress: captureInProgressRef.current,
+      hasVideo: !!videoRef.current,
+      retakingIndex
+    })
 
     // Prevent double capture with both state and ref
     if (isCapturing || captureInProgressRef.current || !videoRef.current) {
-
+      console.log('⏸️ Capture prevented - already capturing or no video')
       return
     }
 
@@ -98,8 +171,15 @@ export function useCamera() {
     captureInProgressRef.current = true
 
     try {
-      const video = videoRef.current
+      // Ensure video is ready before capture
+      const videoReady = await ensureVideoReady()
+      if (!videoReady) {
+        setError("Kamera tidak siap. Silakan coba lagi.")
+        return
+      }
 
+      const video = videoRef.current!
+      console.log('✅ Video ready, starting capture...')
 
       const width = video.videoWidth || 640
       const height = video.videoHeight || 480
@@ -121,23 +201,59 @@ export function useCamera() {
 
       // Use functional update to prevent stale closure issues
       setPhotos((prev) => {
+        console.log('💾 Saving photo...', {
+          retakingIndex,
+          currentPhotosCount: prev.length,
+          totalFrames: frameData.totalFrames,
+          prevPhotos: prev.map((photo, idx) => ({ idx, hasPhoto: !!photo, preview: photo?.substring(0, 20) + '...' }))
+        })
+        
         // if retaking, replace at index
-        if (retakingIndex !== null && prev[retakingIndex]) {
+        if (retakingIndex !== null && retakingIndex >= 0 && retakingIndex < prev.length) {
+          console.log(`🔄 Replacing photo at index ${retakingIndex}`)
           const copy = [...prev]
           copy[retakingIndex] = dataUrl
+          console.log(`✅ Photo replaced at index ${retakingIndex}`)
+          
+          // Reset retaking state after successful replacement
+          setTimeout(() => {
+            setRetakingIndex(null)
+            setSelectedIndex(null)
+          }, 0)
+          
           return copy
+        }
+
+        // If retaking but index is invalid or no photo exists
+        if (retakingIndex !== null) {
+          console.warn(`⚠️ Invalid retake: index ${retakingIndex}, array length ${prev.length}`)
+          // Reset on invalid retake
+          setTimeout(() => {
+            setRetakingIndex(null)
+            setSelectedIndex(null)
+          }, 0)
         }
 
         // otherwise append if not full
         if (prev.length >= frameData.totalFrames) {
+          console.log('🚫 Cannot add more photos, limit reached')
           return prev
+        }
+        
+        console.log(`✅ Adding new photo at index ${prev.length}`)
+        
+        // Reset states for new photo (not retake)
+        if (retakingIndex === null) {
+          setTimeout(() => {
+            setSelectedIndex(null)
+          }, 0)
         }
         
         return [...prev, dataUrl]
       })
 
-      setRetakingIndex(null)
-      setSelectedIndex(null)
+      console.log('🎯 Photo capture completed')
+      // Don't reset states here - they're reset in setPhotos callback
     } catch (err: any) {
       setError("Gagal mengambil foto: " + err.message)
     } finally {
@@ -147,7 +263,7 @@ export function useCamera() {
         captureInProgressRef.current = false
       }, 300)
     }
-  }, [isCapturing, retakingIndex, frameData.totalFrames])
+  }, [isCapturing, retakingIndex, frameData.totalFrames, ensureVideoReady])
 
   const capturePhoto = useCallback(async () => {
 
@@ -191,16 +307,57 @@ export function useCamera() {
 
   const startRetake = () => {
     if (selectedIndex === null) return
-    setRetakingIndex(selectedIndex)
-    setPreviewMode(false) // Exit preview mode when starting retake
+    
+    console.log('🔄 Starting retake for photo index:', selectedIndex, 'Current photos:', photos.length)
+    
+    // Store the index to retake before resetting selectedIndex
+    const indexToRetake = selectedIndex
+    setRetakingIndex(indexToRetake)
+    
+    console.log('📝 Set retakingIndex to:', indexToRetake)
+    
+    // Exit preview mode and return to live camera
+    setPreviewMode(false)
+    setSelectedIndex(null)
+    
+    console.log('🎬 Switched to camera mode, preparing video...')
+    
+    // Give UI time to update, then ensure video is ready but DON'T start capture yet
+    setTimeout(async () => {
+      console.log('📹 Ensuring video is ready for retake...')
+      
+      // Use the new ensureVideoReady function
+      const videoReady = await ensureVideoReady()
+      
+      if (videoReady) {
+        console.log('✅ Video ready! Waiting for user to confirm retake...')
+        setReadyToRetake(true) // Set ready to retake state instead of capturing immediately
+      } else {
+        console.error('❌ Video failed to become ready for retake')
+        setError("Kamera tidak dapat digunakan untuk retake. Silakan coba lagi.")
+        // Reset retaking state on error
+        setRetakingIndex(null)
+      }
+    }, 800) // Increased delay further to ensure UI and stream reconnection completes
+  }
+
+  // New function for user to confirm retake capture
+  const confirmRetake = () => {
+    if (!readyToRetake || retakingIndex === null) return
+    
+    console.log('✅ User confirmed retake, starting capture...')
+    setReadyToRetake(false) // Reset ready state
+    capturePhoto() // Now start the capture process with timer
   }
 
   const cancelRetake = () => {
-    setRetakingIndex(null)
-    // Re-enable preview mode if there's a selected photo
-    if (selectedIndex !== null && photos[selectedIndex]) {
+    // Restore the selected index from retaking index
+    if (retakingIndex !== null && photos[retakingIndex]) {
+      setSelectedIndex(retakingIndex)
       setPreviewMode(true)
     }
+    setRetakingIndex(null)
+    setReadyToRetake(false) // Reset ready to retake state
   }
 
   const finish = () => {
@@ -225,20 +382,32 @@ export function useCamera() {
 
   // Function to toggle preview mode when photo is selected
   const handlePhotoSelect = (index: number) => {
+    console.log('🖼️ Photo selected:', index, 'Has photo:', !!photos[index])
     setSelectedIndex(index)
     if (photos[index]) {
       // If photo exists, enable preview mode
       setPreviewMode(true)
+      console.log('👁️ Preview mode enabled for photo', index)
     } else {
       // If no photo, disable preview mode
       setPreviewMode(false)
+      console.log('❌ No photo at index', index, ', preview mode disabled')
     }
   }
 
   // Function to exit preview mode and return to camera
   const exitPreviewMode = () => {
+    console.log('🚪 Exiting preview mode, returning to camera...')
     setPreviewMode(false)
     setSelectedIndex(null)
+    
+    // Ensure video reconnects to stream when returning to camera mode
+    setTimeout(async () => {
+      if (videoRef.current && streamRef.current) {
+        console.log('🔧 Reconnecting video after exiting preview...')
+        await ensureVideoReady()
+      }
+    }, 100)
   }
 
   return {
@@ -258,10 +427,12 @@ export function useCamera() {
     countdown,
     isCapturing,
     previewMode,
+    readyToRetake,
     
     // Functions
     capturePhoto,
     startRetake,
+    confirmRetake,
     cancelRetake,
     finish,
     handleTimeFinish,

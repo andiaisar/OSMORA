@@ -3,11 +3,13 @@
 interface CameraActionButtonsProps {
   onCapture: () => void
   onStartRetake: () => void
+  onConfirmRetake: () => void
   onCancelRetake: () => void
   onFinish: () => void
   captureDisabled: boolean
   selectedIndex: number | null
   retakingIndex: number | null
+  readyToRetake: boolean
   photos: string[]
   totalFrames: number
   isCapturing?: boolean
@@ -16,11 +18,13 @@ interface CameraActionButtonsProps {
 export default function CameraActionButtons({
   onCapture,
   onStartRetake,
+  onConfirmRetake,
   onCancelRetake,
   onFinish,
   captureDisabled,
   selectedIndex,
   retakingIndex,
+  readyToRetake,
   photos,
   totalFrames,
   isCapturing = false
@@ -40,20 +44,33 @@ export default function CameraActionButtons({
 
   return (
     <div className="space-y-4">
-      {/* Start Photo Button */}
-      <button
-        onClick={handleCaptureClick}
-        disabled={captureDisabled || isCapturing}
-        className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 
-          disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
-          text-white font-semibold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200
-          text-lg transform hover:scale-105 active:scale-95"
-      >
-        {isCapturing ? 'Mengambil...' : (retakingIndex !== null ? 'Ambil Ulang' : 'Mulai Foto')}
-      </button>
+      {/* Start Photo Button or Confirm Retake Button */}
+      {readyToRetake ? (
+        <button
+          onClick={onConfirmRetake}
+          disabled={isCapturing}
+          className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 
+            disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
+            text-white font-semibold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200
+            text-lg transform hover:scale-105 active:scale-95"
+        >
+          {isCapturing ? 'Mengambil...' : 'Ambil Ulang'}
+        </button>
+      ) : (
+        <button
+          onClick={handleCaptureClick}
+          disabled={captureDisabled || isCapturing}
+          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 
+            disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
+            text-white font-semibold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200
+            text-lg transform hover:scale-105 active:scale-95"
+        >
+          {isCapturing ? 'Mengambil...' : 'Mulai Foto'}
+        </button>
+      )}
 
       {/* Retake Controls */}
-      {selectedIndex !== null && photos[selectedIndex] && retakingIndex === null && (
+      {selectedIndex !== null && photos[selectedIndex] && retakingIndex === null && !readyToRetake && (
         <button
           onClick={onStartRetake}
           className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold 
@@ -63,7 +80,7 @@ export default function CameraActionButtons({
         </button>
       )}
 
-      {retakingIndex !== null && (
+      {(retakingIndex !== null || readyToRetake) && (
         <button
           onClick={onCancelRetake}
           className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold 
@@ -74,7 +91,7 @@ export default function CameraActionButtons({
       )}
 
       {/* Finish Button */}
-      {photos.length === totalFrames && (
+      {photos.length === totalFrames && !readyToRetake && (
         <button
           onClick={onFinish}
           className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold 

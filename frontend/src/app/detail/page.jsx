@@ -228,37 +228,74 @@ export default function Page() {
   };
 
   const checkout = async () => {
-    // Gunakan nilai dummy untuk harga jika tidak mengimpor dari 'produk'
+    console.log("🛒 Starting real Midtrans checkout process...");
+    
+    // Check if Midtrans Snap is loaded first
+    if (!window.snap) {
+      alert('Payment system is loading. Please wait a moment and try again.');
+      return;
+    }
+    
     const framePrice = 25000; 
     const totalPrice = framePrice * printQuantity;
     const data = {
-      order_id: Math.floor(Math.random() * 1000).toString(),
-      totalAmount: totalPrice,
-      username: "testuser",
+      id: `order-${Date.now()}`, // Unique order ID
+      productName: `Photo Frame ${selectedFrame}`,
+      amount: printQuantity,
+      price: framePrice,
     }
 
-    const response = await fetch("http://localhost:8000/payment/create-transaction", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data), 
-    });
-    console.log(response);
-    const result = await response.json();
-    window.snap.pay(result.snap_token, {
-      onSuccess: (result) => {
-        console.log("Payment successful:", result);
-        router.push("/camera");
-      },
-      onPending: (result) => {
-        console.log("Payment pending:", result);
-      },
-      onError: (result) => {
-        console.error("Payment error:", result);
-        console.log(result.token);
-      },
-    });
+    console.log("💰 Payment data:", data);
+
+    try {
+      console.log("📡 Calling Midtrans payment API...");
+      const response = await fetch("/api/tokenizer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data), 
+      });
+      
+      console.log("📨 API response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ API Error:", errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log("✅ API result:", result);
+      
+      if (!result.token) {
+        throw new Error('No token received from Midtrans payment service');
+      }
+
+      console.log("💳 Opening Midtrans payment popup...");
+      window.snap.pay(result.token, {
+        onSuccess: (result) => {
+          console.log("✅ Payment successful:", result);
+          alert("Payment successful! Redirecting to photo booth...");
+          router.push("/payment");
+        },
+        onPending: (result) => {
+          console.log("⏳ Payment pending:", result);
+          alert("Payment is being processed. Redirecting to photo booth...");
+          router.push("/payment");
+        },
+        onError: (result) => {
+          console.error("❌ Payment error:", result);
+          alert("Payment failed. Please try again.");
+        },
+        onClose: () => {
+          console.log("🔒 Payment popup closed by user");
+        }
+      });
+    } catch (error) {
+      console.error("💥 Checkout error:", error);
+      alert("Failed to process payment: " + error.message);
+    }
   };
 
   // Gunakan data ini untuk perulangan
@@ -296,11 +333,20 @@ export default function Page() {
   };
 
   useEffect(() => {
+    // Load Midtrans Snap script for real payment processing
     const snapScript = "https://app.sandbox.midtrans.com/snap/snap.js"
-    const clientKey = process.env.NEXT_PUBLIC_CLIENT;
+    const clientKey = "Mid-client-E-Q5p49F6YexvEAj"; // Sandbox client key
     const script = document.createElement("script");
     script.src = snapScript
-    script.setAttribute("data-client-key", clientKey || "");
+    script.setAttribute("data-client-key", clientKey);
+
+    script.onload = () => {
+      console.log("✅ Midtrans Snap script loaded successfully");
+    };
+    
+    script.onerror = () => {
+      console.error("❌ Failed to load Midtrans Snap script");
+    };
 
     document.body.appendChild(script);
 

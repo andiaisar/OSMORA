@@ -21,7 +21,9 @@ export default function Page() {
     countdown,
     isCapturing,
     previewMode,
+    readyToRetake,
     startRetake,
+    confirmRetake,
     capturePhoto,
     cancelRetake,
     finish,
@@ -75,9 +77,11 @@ export default function Page() {
           photos={photos}
           selectedIndex={selectedIndex}
           retakingIndex={retakingIndex}
+          readyToRetake={readyToRetake}
           onFrameSelect={handlePhotoSelect}
           onCapture={capturePhoto}
           onStartRetake={startRetake}
+          onConfirmRetake={confirmRetake}
           onCancelRetake={cancelRetake}
           onFinish={finish}
           onTimeFinish={handleTimeFinish}

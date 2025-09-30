@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { Suspense } from "react"
 import QRCodeImage from "../components/QRCodeImage"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -8,10 +8,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import BackgroundPattern from "../components/BackgroundPattern"
 import Image from "next/image"
 import { Home, Copy } from "lucide-react"
+import { useSearchParams } from 'next/navigation'
 
-export default function ThanksPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
-  const resolvedSearchParams = React.use(searchParams)
-  const code = resolvedSearchParams?.code || Math.random().toString(36).slice(2, 10)
+function ThanksContent() {
+  const searchParams = useSearchParams()
+  const code = searchParams.get('code') || Math.random().toString(36).slice(2, 10)
   const targetUrl = `https://example.com/photos/${code}`
   const [copied, setCopied] = React.useState(false)
 
@@ -144,5 +145,23 @@ export default function ThanksPage({ searchParams }: { searchParams: Promise<{ c
         </p>
       </div>
     </div>
+  )
+}
+
+export default function ThanksPage() {
+  return (
+    <Suspense fallback={
+      <div className="relative w-screen h-screen overflow-hidden bg-background">
+        <BackgroundPattern />
+        <div className="relative z-10 flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-xl text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ThanksContent />
+    </Suspense>
   )
 }
