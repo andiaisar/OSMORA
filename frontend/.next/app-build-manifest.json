@@ -11,15 +11,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/camera/page": [
+    "/detail/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/camera/page.js"
+      "static/chunks/app/detail/page.js"
     ],
-    "/thanks/page": [
+    "/confirm/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/thanks/page.js"
+      "static/chunks/app/confirm/layout.js"
+    ],
+    "/confirm/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/confirm/page.js"
     ]
   }
 }

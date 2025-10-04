@@ -222,8 +222,8 @@ export default function Page() {
 
   const handleNext = () => {
     if (selectedFrame !== null && printQuantity > 0) {
-      checkout();
-      // router.push("/camera")
+      // Navigasi ke halaman konfirmasi dengan parameter frame dan quantity
+      router.push(`/confirm?frame=${selectedFrame}&quantity=${printQuantity}`);
     }
   };
 

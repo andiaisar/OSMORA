@@ -163,7 +163,21 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
     try {
-        const { id, productName, amount, price } = await request.json(); 
+        // Mendukung struktur data lama dan baru
+        const requestData = await request.json();
+        
+        // Struktur baru dari halaman konfirmasi
+        const frameId = requestData.frameId || requestData.id;
+        const quantity = requestData.quantity || requestData.amount;
+        const amount = requestData.amount || requestData.price;
+        const voucherCode = requestData.voucherCode || '';
+        
+        // Fallback untuk struktur lama
+        const productName = requestData.productName || `Frame ${frameId}`;
+        const price = amount / quantity || requestData.price;
+        
+        // Generate unique order ID
+        const orderId = `OSMORA-${Date.now()}-${frameId}`;
         
         // Konfigurasi Midtrans dengan credentials sandbox
         let snap = new Midtrans.Snap({
@@ -173,23 +187,29 @@ export async function POST(request) {
         });
         
         let parameter = {
-            item_details: {
+            item_details: [{
+                id: frameId,
                 name: productName,
                 price: price,
-                quantity: amount,
-            },
+                quantity: quantity,
+            }],
             transaction_details: {
-                order_id: id,
-                gross_amount: price * amount,
+                order_id: orderId,
+                gross_amount: amount,
             },
             customer_details: {
                 first_name: "Photo Booth",
                 last_name: "User",
-                email: "user@photoboothosmora.com"
+                email: "user@photoboothosmora.com",
+                phone: "08123456789"
             },
+            // Tambahkan metadata untuk voucher jika ada
+            custom_field1: voucherCode ? `Voucher: ${voucherCode}` : '',
+            custom_field2: `Frame: ${frameId}`,
+            custom_field3: `Quantity: ${quantity}`,
             // Tambahkan callbacks untuk redirect setelah payment
             callbacks: {
-                finish: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment`
+                finish: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/camera`
             }
         }
 
@@ -197,7 +217,10 @@ export async function POST(request) {
         const token = await snap.createTransactionToken(parameter);
         console.log('Midtrans token created successfully:', token);
 
-        return NextResponse.json({ token });
+        return NextResponse.json({ 
+            token,
+            order_id: orderId 
+        });
     } catch (error) {
         console.error("Midtrans tokenizer error:", error);
         return NextResponse.json(
