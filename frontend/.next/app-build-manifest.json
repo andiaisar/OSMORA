@@ -11,20 +11,35 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/detail/page": [
+    "/admin/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/detail/page.js"
+      "static/chunks/app/admin/layout.js"
     ],
-    "/confirm/layout": [
+    "/admin/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/confirm/layout.js"
+      "static/chunks/app/admin/page.js"
     ],
-    "/confirm/page": [
+    "/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/confirm/page.js"
+      "static/chunks/app/login/page.js"
+    ],
+    "/admin/voucher/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/voucher/page.js"
+    ],
+    "/admin/frames/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/frames/page.js"
+    ],
+    "/admin/booths/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/booths/page.js"
     ]
   }
 }

@@ -1,4 +1,8 @@
 {
-  "/detail/page": "app/detail/page.js",
-  "/confirm/page": "app/confirm/page.js"
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
+  "/admin/voucher/page": "app/admin/voucher/page.js",
+  "/admin/booths/page": "app/admin/booths/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/frames/page": "app/admin/frames/page.js"
 }
