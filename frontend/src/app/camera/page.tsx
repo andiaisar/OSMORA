@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import BackgroundPattern from "../components/BackgroundPattern"
 import WelcomePopup from "../components/WelcomePopup"
 import CameraPreview from "../components/CameraPreview"
@@ -8,6 +9,26 @@ import CameraSidebar from "../components/CameraSidebar"
 import { useCamera } from "../../hooks/useCamera"
 
 export default function Page() {
+  const searchParams = useSearchParams()
+  let frameId = searchParams.get('frameId')
+  
+  // If no frameId but we have an order_id from Midtrans callback, try to extract frameId from it
+  // Order IDs are in the format OSMORA-timestamp-frameId
+  if (!frameId && searchParams.get('order_id')) {
+    const orderId = searchParams.get('order_id') as string
+    console.log('📝 No frameId, but found order_id:', orderId)
+    
+    // Try to extract frameId from the order_id (format: OSMORA-timestamp-frameId)
+    const orderParts = orderId.split('-')
+    if (orderParts.length >= 3) {
+      frameId = orderParts[2]
+      console.log('🔄 Extracted frameId from order_id:', frameId)
+    }
+  }
+  
+  // Debug log to verify frameId is received correctly
+  console.log('🔍 Camera page received frameId:', frameId)
+  
   const {
     videoRef,
     error,
@@ -34,11 +55,13 @@ export default function Page() {
     setCaptureTimer,
     handlePhotoSelect,
     exitPreviewMode
-  } = useCamera()
+  } = useCamera(frameId)
 
   // Debug state changes
   useEffect(() => {
     console.log('📊 Camera state update:', {
+      frameId,
+      totalFrames: frameData.totalFrames,
       photosCount: photos.length,
       selectedIndex,
       retakingIndex,
@@ -49,7 +72,7 @@ export default function Page() {
       previewMode,
       hasError: !!error
     })
-  }, [photos.length, selectedIndex, retakingIndex, captureTimer, isCountingDown, countdown, isCapturing, previewMode, error])
+  }, [frameId, frameData.totalFrames, photos.length, selectedIndex, retakingIndex, captureTimer, isCountingDown, countdown, isCapturing, previewMode, error])
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100">

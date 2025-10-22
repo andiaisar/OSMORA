@@ -760,9 +760,6 @@ font-style: demibold;
   .h-0 {
     height: calc(var(--spacing) * 0);
   }
-  .h-1 {
-    height: calc(var(--spacing) * 1);
-  }
   .h-2 {
     height: calc(var(--spacing) * 2);
   }
@@ -792,9 +789,6 @@ font-style: demibold;
   }
   .h-12 {
     height: calc(var(--spacing) * 12);
-  }
-  .h-13 {
-    height: calc(var(--spacing) * 13);
   }
   .h-14 {
     height: calc(var(--spacing) * 14);
@@ -1450,6 +1444,12 @@ font-style: demibold;
   .bg-black {
     background-color: var(--color-black);
   }
+  .bg-black\/10 {
+    background-color: color-mix(in srgb, #000 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-black) 10%, transparent);
+    }
+  }
   .bg-black\/50 {
     background-color: color-mix(in srgb, #000 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -1763,9 +1763,6 @@ font-style: demibold;
   }
   .pt-5 {
     padding-top: calc(var(--spacing) * 5);
-  }
-  .pt-6 {
-    padding-top: calc(var(--spacing) * 6);
   }
   .pr-2 {
     padding-right: calc(var(--spacing) * 2);

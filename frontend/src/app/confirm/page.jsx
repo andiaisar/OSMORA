@@ -137,11 +137,13 @@ export default function ConfirmPage() {
       window.snap.pay(token, {
         onSuccess: function(result) {
           console.log('Payment success:', result);
-          router.push('/camera');
+          console.log('Redirecting to camera with frameId:', frame.id);
+          router.push(`/camera?frameId=${frame.id}`);
         },
         onPending: function(result) {
           console.log('Payment pending:', result);
-          router.push('/camera');
+          console.log('Redirecting to camera with frameId:', frame.id);
+          router.push(`/camera?frameId=${frame.id}`);
         },
         onError: function(result) {
           console.log('Payment error:', result);

@@ -11,35 +11,35 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/admin/layout": [
+    "/detail/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/layout.js"
+      "static/chunks/app/detail/page.js"
     ],
-    "/admin/page": [
+    "/confirm/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/page.js"
+      "static/chunks/app/confirm/layout.js"
     ],
-    "/login/page": [
+    "/confirm/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/login/page.js"
+      "static/chunks/app/confirm/page.js"
     ],
-    "/admin/voucher/page": [
+    "/api/tokenizer/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/voucher/page.js"
+      "static/chunks/app/api/tokenizer/route.js"
     ],
-    "/admin/frames/page": [
+    "/camera/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/frames/page.js"
+      "static/chunks/app/camera/page.js"
     ],
-    "/admin/booths/page": [
+    "/thanks/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/booths/page.js"
+      "static/chunks/app/thanks/page.js"
     ]
   }
 }

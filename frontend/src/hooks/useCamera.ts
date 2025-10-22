@@ -2,8 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { getFrame } from '../lib/api'
 
-export function useCamera() {
+type FrameData = {
+  totalFrames: number
+  frames: { id: number; name: string }[]
+}
+
+export function useCamera(frameId: string | null = null) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -17,24 +23,106 @@ export function useCamera() {
   const [isCapturing, setIsCapturing] = useState(false) // Add this to prevent double capture
   const [previewMode, setPreviewMode] = useState(false) // New state for preview mode
   const [readyToRetake, setReadyToRetake] = useState(false) // New state for retake ready mode
-  const router = useRouter()
-
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const captureInProgressRef = useRef<boolean>(false)
-
-  // Dummy frame data - akan diganti dengan data real nantinya
-  const frameData = {
-    totalFrames: 4, // bisa diubah menjadi 6, 8, dll
+  const [frameData, setFrameData] = useState<FrameData>({
+    totalFrames: 4, // Default to 4 frames
     frames: [
       { id: 1, name: "Frame 1" },
       { id: 2, name: "Frame 2" },
       { id: 3, name: "Frame 3" },
       { id: 4, name: "Frame 4" }
     ]
-  }
+  })
+  const router = useRouter()
+
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const captureInProgressRef = useRef<boolean>(false)
+
+  // Fetch frame data if frameId is provided
+  useEffect(() => {
+    // Default to 4-frame if no frameId provided
+    if (!frameId) {
+      console.log('⚠️ No frameId provided, defaulting to 4-frame layout')
+      
+      // Ensure we have the default 4 frames
+      const defaultFrames = Array.from(
+        { length: 4 },
+        (_, idx) => ({ id: idx + 1, name: `Frame ${idx + 1}` })
+      )
+      
+      setFrameData({
+        totalFrames: 4,
+        frames: defaultFrames
+      })
+      return
+    }
+
+    console.log('🖼️ Fetching frame data for frameId:', frameId)
+    
+    // Local function to update frame data based on count
+    const updateFrameData = (count: number) => {
+      console.log(`🔄 Creating ${count} frame slots`)
+      
+      const framesArray = Array.from(
+        { length: count },
+        (_, idx) => ({ id: idx + 1, name: `Frame ${idx + 1}` })
+      )
+      
+      console.log(`� Setting frameData with totalFrames: ${count}, frames array length: ${framesArray.length}`)
+      
+      // Use setTimeout to ensure state update happens outside current execution context
+      setTimeout(() => {
+        setFrameData({
+          totalFrames: count,
+          frames: framesArray
+        })
+      }, 0)
+    }
+    
+    // Simplified direct approach - don't even try the API for now
+    const frameIdNumber = parseInt(frameId)
+    // Check if it's one of our 6-photo frames (IDs 4, 5, 6)
+    const isSixPhotoFrame = [4, 5, 6].includes(frameIdNumber)
+    const totalPhotos = isSixPhotoFrame ? 6 : 4
+    
+    console.log(`📱 Frame ID ${frameId} corresponds to a ${totalPhotos}-photo frame`)
+    updateFrameData(totalPhotos)
+    
+    /* Uncomment this when API is ready
+    async function fetchFrameData() {
+      try {
+        // Only call API if frameId is not null
+        const frameResponse: any = await getFrame(frameId as string)
+        console.log('✅ Frame data received:', frameResponse)
+        
+        // The backend API response contains photo_in_frame property
+        if (frameResponse && frameResponse.photo_in_frame) {
+          // Create frames array based on photo_in_frame count
+          const photoCount = frameResponse.photo_in_frame as number
+          updateFrameData(photoCount)
+        } else {
+          // Fallback to basic layout info from confirm page
+          const frameIdNumber = parseInt(frameId as string)
+          const isSixPhotoFrame = [4, 5, 6].includes(frameIdNumber)
+          const totalPhotos = isSixPhotoFrame ? 6 : 4
+          updateFrameData(totalPhotos)
+        }
+      } catch (err) {
+        console.error('❌ Error fetching frame data:', err)
+        // On error, use the fallback approach
+        const frameIdNumber = parseInt(frameId as string)
+        const isSixPhotoFrame = [4, 5, 6].includes(frameIdNumber)
+        const totalPhotos = isSixPhotoFrame ? 6 : 4
+        updateFrameData(totalPhotos)
+      }
+    }
+
+    fetchFrameData()
+    */
+  }, [frameId])
 
   // Function untuk menentukan grid columns berdasarkan jumlah frame
   const getGridColumns = (totalFrames: number) => {
+    console.log(`🧮 Getting grid columns for ${totalFrames} total frames`)
     if (totalFrames <= 2) return "grid-cols-1"
     if (totalFrames <= 4) return "grid-cols-2"
     if (totalFrames <= 6) return "grid-cols-3"
@@ -105,6 +193,16 @@ export function useCamera() {
       setError(null)
     }
   }, [previewMode]) // Re-run when previewMode changes
+
+  // Log the current state of frameData whenever it changes
+  useEffect(() => {
+    console.log('📊 Current frameData state:', {
+      frameId,
+      totalFrames: frameData.totalFrames,
+      framesLength: frameData.frames.length,
+      frameDetails: frameData.frames.map(f => ({ id: f.id, name: f.name }))
+    })
+  }, [frameData, frameId])
 
   // Function to ensure video is connected to stream and ready
   const ensureVideoReady = useCallback(async () => {

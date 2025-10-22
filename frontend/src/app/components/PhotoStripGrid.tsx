@@ -20,6 +20,9 @@ export default function PhotoStripGrid({
   onFrameSelect, 
   getGridColumns 
 }: PhotoStripGridProps) {
+  // Debug log to verify we're getting the correct number of frames
+  console.log(`📸 PhotoStripGrid rendering with ${frames.length} frames`)
+  
   return (
     <div className="flex-1 flex items-center justify-center">
       <div className="bg-black rounded-2xl p-4 shadow-xl">

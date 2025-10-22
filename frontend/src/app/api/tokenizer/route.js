@@ -209,7 +209,7 @@ export async function POST(request) {
             custom_field3: `Quantity: ${quantity}`,
             // Tambahkan callbacks untuk redirect setelah payment
             callbacks: {
-                finish: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/camera`
+                finish: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/camera?frameId=${frameId}`
             }
         }
 

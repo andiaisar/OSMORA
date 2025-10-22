@@ -69,13 +69,22 @@ export default function CameraSidebar({
       />
 
       {/* Photo Strip Grid */}
-      <PhotoStripGrid
-        frames={frameData.frames}
-        photos={photos}
-        selectedIndex={selectedIndex}
-        onFrameSelect={onFrameSelect}
-        getGridColumns={getGridColumns}
-      />
+      {frameData.frames.length > 0 && (
+        <>
+          <PhotoStripGrid
+            frames={frameData.frames}
+            photos={photos}
+            selectedIndex={selectedIndex}
+            onFrameSelect={onFrameSelect}
+            getGridColumns={getGridColumns}
+          />
+          
+          {/* Debug info for frame count */}
+          <div className="text-xs text-center bg-black/10 rounded p-1 my-1">
+            Frame slots: {frameData.frames.length}/{frameData.totalFrames}
+          </div>
+        </>
+      )}
 
       {/* Action Buttons */}
       <CameraActionButtons
